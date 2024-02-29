@@ -14,6 +14,7 @@ import torch.nn as nn
 import torch
 import random
 import os
+import argparse
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
@@ -168,8 +169,8 @@ def seed_torch(
     torch.backends.cudnn.enabled = False
 
 
-def run_expriments(device, comb_data, data_set_path):
-    split = 10
+def run_expriments(device, comb_data, data_set_path, log_filename, args):
+    split = args.split
     seed_torch(2023)
     all_acc = np.zeros((split, 1))
     all_prec = np.zeros((split, 1))
@@ -177,18 +178,19 @@ def run_expriments(device, comb_data, data_set_path):
     all_f1 = np.zeros((split, 1))
     all_roc_auc = np.zeros((split, 1))
     all_aupr = np.zeros((split, 1))
-    n_epochs = 200
+    n_epochs = args.n_epochs
     smiles_1, smiles_2, cell_line, Y = read_data_file(data_set_path)
     kf = KFold(n_splits=split, shuffle=True, random_state=2023)
     for split, (train_index, test_index) in enumerate(kf.split(Y)):
         trainLoader, validLoader, testLoader = define_dataloader(train_index, test_index, smiles_1, smiles_2, cell_line, Y,
-                                                                 128, 256, device, data_type)
-        model = HGANDDS(data=comb_data, hidden_channels=1024, is_gnn=False, drug_feature_length=384, data_type=data_type)
+                                                                 128, args.batch_size, device, data_type)
+        model = HGANDDS(data=comb_data, hidden_channels=args.hidden_channels, is_gnn=False,
+                        drug_feature_length=args.drug_feature_length, data_type=data_type)
         filename = utils.add_time_suffix('hgandds_model'+data_type)
         stopper = EarlyStopping(mode='higher', filename=filename, patience=10)
         model = model.to(device)
         comb_data = comb_data.to(device)
-        lr = 1e-3
+        lr = args.lr
         optimizer = AdamW(model.parameters(), lr=lr)
         scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=lr, epochs=n_epochs,
                                                         steps_per_epoch=len(trainLoader))
@@ -249,12 +251,28 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-data_type = 'drugcombdb'
-log_filename = utils.generate_log_filename('HGANDDS_{}'.format(data_type))
 if __name__ == "__main__":
-    device = torch.device("cuda", 0)
+    parser = argparse.ArgumentParser(description='HGANDDS training')
+    parser.add_argument('--data_type', type=str, default='drugcombdb', help="Types of drug combination data sets")
+    parser.add_argument('--gpu_index', type=int, default=0, help="GPU index for training")
+    parser.add_argument('--data_set_filename', type=str, default="drugcomb.csv",
+                        help="The filename of drug combination data")
+    parser.add_argument('--hidden_channels', type=int, default=1024,
+                        help="The number of hidden neurons in the model")
+    parser.add_argument('--drug_feature_length', type=int, default=384, help="Dimensions of drug features")
+    parser.add_argument('--batch_size', type=int, default=256, help="Batch size of training data")
+    parser.add_argument('--n_epochs', type=int, default=200, help="Epochs of training")
+    parser.add_argument('--split', type=int, default=10, help="Split of training data")
+    parser.add_argument('--lr', type=float, default=1e-3, help="Learning rate in training process")
+    args = parser.parse_args()
+    
+    data_type = args.data_type
+    gpu_index = args.gpu_index
+    log_filename = utils.generate_log_filename('HGANDDS_{}'.format(data_type))
+    device = torch.device("cuda", gpu_index)
+    data_set_path = 'data/{}/{}'.format(data_type, args.data_set_filename)
+    utils.log_to_file_and_console(log_file_name=log_filename, fmt='args:{}'.format(args), log=None)
     comb_data = utils.init_hetero_data(
         data_type=data_type, device=device
     )
-    data_set_path = '../data/{}/drug_comb.csv'.format(data_type)
-    run_expriments(device, comb_data, data_set_path)
+    run_expriments(device, comb_data, data_set_path, log_filename, args)

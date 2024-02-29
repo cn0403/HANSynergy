@@ -362,7 +362,7 @@ def generate_log_filename(
 
 def init_hetero_data(
     device,
-    save_filename: str = './drugcombdb/comb_data.pickle',
+    save_filename: str = './data/drugcombdb/comb_data.pickle',
     data_type: str = 'drugcombdb',
 ):
     save_filename = save_filename.replace('drugcombdb', data_type)

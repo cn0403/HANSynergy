@@ -18,7 +18,7 @@ class DrugSynergyDataset(data.Dataset):
         self.Y = Y
         self.device = device
         self.len = len(self.Y)
-        self.cell_line_features = json.loads(open("./{}/cell_line_set_m.json".format(dataset_type), 'r').read()) # cell_line对应的feature
+        self.cell_line_features = json.loads(open("./data/{}/cell_line_set_m.json".format(dataset_type), 'r').read()) # cell_line对应的feature
         self.cid_smile_dict = utils.get_dict_from_json_filename('../data/cid_smile.json') # cid对应的smile
         self.entity_id_dict = utils.get_dict_from_json_filename('../data/{}/id_dict.json'.format(dataset_type)) # 每个实体对应的id
         model_name = 'pretrained/simcsesqrt-model'
