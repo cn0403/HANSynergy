@@ -3,8 +3,8 @@ Python 3.8.17
 
 # Installation
 ```
-conda create -n HGANDDS python=3.8.17
-conda activate HGANDDS
+conda create -n HANSynergy python=3.8.17
+conda activate HANSynergy
 pip install -r requirements.txt
 ```
 
@@ -30,7 +30,7 @@ It's the data set of the link between protein and protein that we collected from
 `cell_protein_tissue.csv`
 It is the data set of cell line, tissue and protein link that we collected.
 # Training
-To train HGANDDS, please input following in terminal.
+To train HANSynergy, please input following in terminal.
 
 ```
 python main.py
@@ -54,7 +54,7 @@ Split of training data
 `--lr`
 Learning rate in training process
 
-For example, to train HGANDDS on Drugcomb dataset,
+For example, to train HANSynergy on Drugcomb dataset,
 
 ```
 python main.py --data_type drugcomb --data_set_filename drug_comb.csv --hidden_channels 1024 --drug_feature_length 384 --batch_size 256 --n_epochs 200 --split 10 --lr 1e-3
