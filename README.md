@@ -1,4 +1,4 @@
-# HGANDDS
+# HANSynergy
 Python 3.8.17 
 
 # Installation
